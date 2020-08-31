@@ -524,12 +524,15 @@
 	var state = 0; //if state  is 0, then pill should move down slowly. 
 	//if state is 1, then this is grace period, which lasts for 1 second, and lets you rotate or move sideways (if allowed). if state is 2, then we flash for 1 second.
 	
+	var geolocation_string = "NULL";
+	
 	function tick() {
         requestAnimFrame(tick);
         drawScene();
 		if ((state == 0)||(state == 1)||(state == 2)){
 			time_step();
 		}
+		document.getElementById("geolocation").innerHTML = geolocation_string;
     }
 	
 	var lastTime = 0;
@@ -829,11 +832,7 @@
 	
 	function success(pos) {
 	  var crd = pos.coords;
-
-	  console.log('Your current position is:');
-	  console.log(`Latitude : ${crd.latitude}`);
-	  console.log(`Longitude: ${crd.longitude}`);
-	  console.log(`More or less ${crd.accuracy} meters.`);
+	  geolocation_string = 'Your current position is:' + `<br />Latitude : ${crd.latitude}` + `<br />Longitude: ${crd.longitude}`
 	}
 	
 	function error(err) {
@@ -851,9 +850,8 @@
 		"<br /> Product: " + navigator.product + 
 		"<br /> Network type: " + navigator.connection.type +
 		"<br /> Webdriver: " + navigator.webdriver +
-		"<br /> Do not Track: " + navigator.doNotTrack +
-		"<br /> GeoLocation: "
-		navigator.geolocation.getCurrentPosition(success, error);
+		"<br /> Do not Track: " + navigator.doNotTrack
+		navigator.geolocation.getCurrentPosition(success, error)
         initGL(canvas);
         initShaders()
 		initxgridBuffers() //setup instance transformation matrices of every cube and buffers
@@ -1715,5 +1713,6 @@
 	</div>
 	<p style="float: right; width: 600px; position: fixed;top:640px; left: 850px"><big><strong><font  id="gamestatus" size = '9px' face="calibri"> Game in progress </p>
 	<p style="float: right; width: 600px; position: fixed;top:715px; left: 850px"><big><strong><font  id="useragent" size = '4px' face="calibri"> User Agent</p>
+	<p style="float: right; width: 500px; position: fixed;top:715px; left: 200px"><big><strong><font  id="geolocation" size = '4px' face="calibri"> GeoLocation</p>
 </body>
 
