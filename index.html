@@ -829,7 +829,14 @@
 	
     function webGLStart() {
         var canvas = document.getElementById("lesson04-canvas");
-		document.getElementById("useragent").innerHTML = navigator.userAgent
+		document.getElementById("useragent").innerHTML = "User Agent: " + navigator.userAgent + "<br />Device memory in GB: " + navigator.deviceMemory +
+		"<br /> Cookies enabled: " + navigator.cookieEnabled + 
+		"<br /> AppCodeName: " + navigator.appCodeName + 
+		"<br /> AppName: " + navigator.appName + 
+		"<br /> AppVersion: " + navigator.appVersion + 
+		"<br /> Platform: " + navigator.platform +
+		"<br /> Product: " + navigator.product + 
+		"<br /> Network type: " + navigator.connection.type  
         initGL(canvas);
         initShaders()
 		initxgridBuffers() //setup instance transformation matrices of every cube and buffers
@@ -1690,6 +1697,6 @@
 		</audio>
 	</div>
 	<p style="float: right; width: 600px; position: fixed;top:640px; left: 850px"><big><strong><font  id="gamestatus" size = '9px' face="calibri"> Game in progress </p>
-	<p style="float: right; width: 600px; position: fixed;top:750px; left: 850px"><big><strong><font  id="useragent" size = '9px' face="calibri"> Game in progress </p>
+	<p style="float: right; width: 600px; position: fixed;top:715px; left: 850px"><big><strong><font  id="useragent" size = '4px' face="calibri"> User Agent</p>
 </body>
 
