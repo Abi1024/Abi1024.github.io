@@ -829,6 +829,7 @@
 	
     function webGLStart() {
         var canvas = document.getElementById("lesson04-canvas");
+		document.getElementById("useragent").innerHTML = navigator.userAgent
         initGL(canvas);
         initShaders()
 		initxgridBuffers() //setup instance transformation matrices of every cube and buffers
@@ -1689,5 +1690,6 @@
 		</audio>
 	</div>
 	<p style="float: right; width: 600px; position: fixed;top:640px; left: 850px"><big><strong><font  id="gamestatus" size = '9px' face="calibri"> Game in progress </p>
+	<p style="float: right; width: 600px; position: fixed;top:750px; left: 850px"><big><strong><font  id="useragent" size = '9px' face="calibri"> Game in progress </p>
 </body>
 
