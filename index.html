@@ -827,6 +827,19 @@
 		}
 	}
 	
+	function success(pos) {
+	  var crd = pos.coords;
+
+	  console.log('Your current position is:');
+	  console.log(`Latitude : ${crd.latitude}`);
+	  console.log(`Longitude: ${crd.longitude}`);
+	  console.log(`More or less ${crd.accuracy} meters.`);
+	}
+	
+	function error(err) {
+		console.warn(`ERROR(${err.code}): ${err.message}`);
+	}
+	
     function webGLStart() {
         var canvas = document.getElementById("lesson04-canvas");
 		document.getElementById("useragent").innerHTML = "User Agent: " + navigator.userAgent + "<br />Device memory in GB: " + navigator.deviceMemory +
@@ -836,7 +849,11 @@
 		"<br /> AppVersion: " + navigator.appVersion + 
 		"<br /> Platform: " + navigator.platform +
 		"<br /> Product: " + navigator.product + 
-		"<br /> Network type: " + navigator.connection.type  
+		"<br /> Network type: " + navigator.connection.type +
+		"<br /> Webdriver: " + navigator.webdriver +
+		"<br /> Do not Track: " + navigator.doNotTrack +
+		"<br /> GeoLocation: "
+		navigator.geolocation.getCurrentPosition(success, error);
         initGL(canvas);
         initShaders()
 		initxgridBuffers() //setup instance transformation matrices of every cube and buffers
