@@ -1,0 +1,640 @@
+<!--Abiyaz Chowdhury, Spring 2017 ECE462 Rubik's Cube Project -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>Abi Rubik's Cube, ECE462</title>
+<script type="text/javascript" src="./final_files/MV.js.download"></script>
+<script type="text/javascript" src="./final_files/webgl-utils.js.download"></script>
+
+<script id="shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+
+    varying vec4 vColor;
+
+    void main(void) {
+        gl_FragColor = vColor;
+    }
+</script>
+
+<script id="shader-vs" type="x-shader/x-vertex">
+    attribute vec3 aVertexPosition;
+    attribute vec4 aVertexColor;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+
+    varying vec4 vColor;
+
+    void main(void) {
+        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+        vColor = aVertexColor;
+    }
+</script>
+
+<script type="text/javascript">
+
+    var gl;
+
+    function initGL(canvas) {
+        try {
+            gl = canvas.getContext("experimental-webgl");
+            gl.viewportWidth = canvas.width;
+            gl.viewportHeight = canvas.height;
+        } catch (e) {
+        }
+        if (!gl) {
+            alert("Could not initialise WebGL, sorry :-(");
+        }
+    }
+
+    function getShader(gl, id) {
+        var shaderScript = document.getElementById(id);
+        if (!shaderScript) {
+            return null;
+        }
+
+        var str = "";
+        var k = shaderScript.firstChild;
+        while (k) {
+            if (k.nodeType == 3) {
+                str += k.textContent;
+            }
+            k = k.nextSibling;
+        }
+
+        var shader;
+        if (shaderScript.type == "x-shader/x-fragment") {
+            shader = gl.createShader(gl.FRAGMENT_SHADER);
+        } else if (shaderScript.type == "x-shader/x-vertex") {
+            shader = gl.createShader(gl.VERTEX_SHADER);
+        } else {
+            return null;
+        }
+
+        gl.shaderSource(shader, str);
+        gl.compileShader(shader);
+
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            alert(gl.getShaderInfoLog(shader));
+            return null;
+        }
+
+        return shader;
+    }
+
+    var shaderProgram;
+
+    function initShaders() {
+        var fragmentShader = getShader(gl, "shader-fs");
+        var vertexShader = getShader(gl, "shader-vs");
+
+        shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+
+        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+            alert("Could not initialise shaders");
+        }
+
+        gl.useProgram(shaderProgram);
+
+        shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+        gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+
+        shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
+        gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
+
+        shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+        shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+    }
+	
+    var mvMatrix = mat4();
+    var mvMatrixStack = [];
+    var pMatrix = mat4();
+
+    function mvPushMatrix(matrix) {
+        var copy = mat4();
+        copy = matrix;
+        mvMatrixStack.push(copy);
+    }
+
+    function mvPopMatrix() {
+        if (mvMatrixStack.length == 0) {
+            throw "Invalid popMatrix!";
+        }
+        return mvMatrixStack.pop();
+    }
+
+    function setMatrixUniforms() {
+        gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, flatten(pMatrix));
+        gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, flatten(mvMatrix));
+    }
+
+	var mouseDown = false;
+    var lastMouseX = null;
+    var lastMouseY = null;
+	
+    var cubeRotationMatrix = mat4();
+	
+	function handleMouseDown(event) {
+        mouseDown = true;
+        lastMouseX = event.clientX;
+        lastMouseY = event.clientY;
+    }
+
+    function handleMouseUp(event) {
+        mouseDown = false;
+    }
+
+	var newX;
+	var newY;
+    function handleMouseMove(event) {
+	    newX = event.clientX;
+        newY = event.clientY;
+        if (!mouseDown){
+            return;
+        }
+		if ((newX > gl.viewportWidth) || (newX < 0) || (newY > gl.viewportHeight) || (newY < 0)){
+			mouseDown = false;
+			return;
+		}
+        var deltaX = newX - lastMouseX
+        cubeRotationMatrix = mult(rotateY(-deltaX / 2),cubeRotationMatrix);
+        var deltaY = newY - lastMouseY;
+		cubeRotationMatrix = mult(rotateX(-deltaY / 2),cubeRotationMatrix);
+        lastMouseX = newX
+        lastMouseY = newY;
+    }
+	
+    var cubeVertexPositionBuffer;
+    var cubeVertexColorBuffers = [];
+    var cubeVertexIndexBuffer;
+
+	var cubes = [];
+	function initBuffers(){
+		cubeVertexPositionBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
+		for (var i = 0; i < 3; i++){
+			for (var j = 0; j < 3; j++){
+				for (var k = 0; k < 3; k++){
+					var instance_transformation = mat4();
+					instance_transformation = mult(translate(i-1,j-1,k-1),instance_transformation);
+					cubes.push(instance_transformation);
+				}
+			}
+		}
+		vertices = [
+            // Front face
+            -1.0, -1.0,  1.0,
+             1.0, -1.0,  1.0,
+             1.0,  1.0,  1.0,
+            -1.0,  1.0,  1.0,
+
+            // Back face
+            -1.0, -1.0, -1.0,
+            -1.0,  1.0, -1.0,
+             1.0,  1.0, -1.0,
+             1.0, -1.0, -1.0,
+
+            // Top face
+            -1.0,  1.0, -1.0,
+            -1.0,  1.0,  1.0,
+             1.0,  1.0,  1.0,
+             1.0,  1.0, -1.0,
+
+            // Bottom face
+            -1.0, -1.0, -1.0,
+             1.0, -1.0, -1.0,
+             1.0, -1.0,  1.0,
+            -1.0, -1.0,  1.0,
+
+            // Right face
+             1.0, -1.0, -1.0,
+             1.0,  1.0, -1.0,
+             1.0,  1.0,  1.0,
+             1.0, -1.0,  1.0,
+
+            // Left face
+            -1.0, -1.0, -1.0,
+            -1.0, -1.0,  1.0,
+            -1.0,  1.0,  1.0,
+            -1.0,  1.0, -1.0
+        ];
+		for (var i = 0; i < vertices.length; i++){
+			vertices[i] *= 0.45;
+		}
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+        cubeVertexPositionBuffer.itemSize = 3;
+        cubeVertexPositionBuffer.numItems = 24;
+		for (var i = 0; i < 27; i++){
+			var cubeVertexColorBuffer = gl.createBuffer()
+			cubeVertexColorBuffers.push(cubeVertexColorBuffer);
+			gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexColorBuffers[i]);
+			colors = [
+				[0.0, 0.0, 0.0, 1.0], // Front face
+				[0.0, 0.0, 0.0, 1.0], // Back face
+				[0.0, 0.0, 0.0, 1.0], // Top face
+				[0.0, 0.0, 0.0, 1.0], // Bottom face
+				[0.0, 0.0, 0.0, 1.0], // Right face
+				[0.0, 0.0, 0.0, 1.0]  // Left face
+			];
+			if ((i%9 > 5)&&(i%9 < 9)){
+				colors[2] = [1.0,1.0,1.0,1.0]
+			}if ((i > -1)&&(i< 9)){
+				colors[5] = [0.0,1.0,0.0,1.0]
+			}if ((i > -1)&&(i< 9)){
+				colors[5] = [0.0,0.61,0.28,1.0]
+			}if (i%3 == 0){
+				colors[1] = [1.0,0.35,0.1,1.0]
+			}if (i%3 == 2){
+				colors[0] = [0.72,0.07,0.20,1.0]
+			}if ((i > 17)&&(i < 27)){
+				colors[4] = [0.0,0.27,0.68,1.0]
+			}if ((i%9 > -1)&&(i%9 < 3)){
+				colors[3] = [1.0,0.84,0.0,1.0]
+			}
+			
+			var unpackedColors = [];
+			for (var k in colors) {
+				var color = colors[k];
+				for (var j=0; j < 4; j++) {
+					unpackedColors = unpackedColors.concat(color);
+				}
+			}
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(unpackedColors), gl.STATIC_DRAW);
+			cubeVertexColorBuffers[i].itemSize = 4;
+			cubeVertexColorBuffers[i].numItems = 24;
+		}
+        cubeVertexIndexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
+        var cubeVertexIndices = [
+            0, 1, 2,      0, 2, 3,    // Front face
+            4, 5, 6,      4, 6, 7,    // Back face
+            8, 9, 10,     8, 10, 11,  // Top face
+            12, 13, 14,   12, 14, 15, // Bottom face
+            16, 17, 18,   16, 18, 19, // Right face
+            20, 21, 22,   20, 22, 23  // Left face
+        ];
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cubeVertexIndices), gl.STATIC_DRAW);
+        cubeVertexIndexBuffer.itemSize = 1;
+        cubeVertexIndexBuffer.numItems = 36;
+	}
+
+    function drawScene() {
+        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        pMatrix = perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0);
+		mvMatrix = mat4();
+		for (var i = 0; i < cubes.length ; i++){
+			mvPushMatrix(mvMatrix);
+			mvMatrix = mult(cubes[i],mvMatrix);
+			mvMatrix = mult(cubeRotationMatrix,mvMatrix);
+			mvMatrix = mult(translate(0,0.0,-8.0),mvMatrix);
+			gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
+			gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+			gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexColorBuffers[i]);
+			gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, cubeVertexColorBuffers[i].itemSize, gl.FLOAT, false, 0, 0);
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
+			setMatrixUniforms();
+			gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+			mvMatrix = mvPopMatrix();
+		}
+    }
+	
+		
+	
+	var rotation_stack = [];
+	var lastTime = 0;
+	var rotation_so_far = 0;
+	
+	function user_rotate(code){
+		if (rotation_stack.length == 0){
+			rotation_stack.push(code);
+		}
+	}
+
+    function tick() {
+        requestAnimFrame(tick);
+		if (rotation_stack.length > 0){
+			animate();
+		}else{
+			var solved = isSolved();
+			if (solved){
+				document.getElementById("cube_state").innerHTML = "Cube State: SOLVED!!!";
+			}else{
+				document.getElementById("cube_state").innerHTML = "Cube State: UNSOLVED";
+			}
+		}
+		drawScene();
+    }
+	
+	function isSolved(){
+		if (!sameFace([2,5,8,11,14,17,20,23,26])){ //red face
+			return false;
+		}
+		if (!sameFace([0,3,6,9,12,15,18,21,24])){ //orange face
+			return false;
+		}
+		if (!sameFace([0,1,2,3,4,5,6,7,8])){ //green face
+			return false;
+		}
+		if (!sameFace([18,19,20,21,22,23,24,25,26])){ //blue
+			return false;
+		}
+		if (!sameFace([6,7,8,15,16,17,24,25,26])){ //white face
+			return false;
+		}
+		if (!sameFace([0,1,2,9,10,11,18,19,20])){ //yellow face
+			return false;
+		}
+		return true;
+		function sameFace(indices){
+			//given a set of cube indices, this determines whether they all lie in the same face. test each face separately.
+			var prev = [0,0,0]
+			for (var i = 0; i < indices.length; i++){
+				var current = [0,0,0]
+				for (var j = 0; j < 3; j++){
+					if (cubes[indices[i]][j][3] < -0.5){
+						current[j] = 1;			
+					}else if (cubes[indices[i]][j][3] > 0.5){
+						current[j] = 3;
+					}else{
+						current[j] = 2;
+					}
+					if (prev[j] == -1){
+						prev[j] = -1;
+					}else if (!prev[j]){
+						prev[j] = current[j]
+					}else{
+						if (prev[j] != current[j]){
+							prev[j] = -1;
+						}
+					}
+				}
+			}
+			for (var i = 0; i < 3; i++){
+				if (prev[i] != -1){
+					return true;
+				}
+			}
+		}
+	}
+	
+	function animate() {
+        var timeNow = new Date().getTime();
+		var rAnimate = 0;
+        if (lastTime != 0) {
+            var elapsed = timeNow - lastTime;
+			var rAnimate = (180 * elapsed) / 1000.0;
+        }
+        lastTime = timeNow;
+		var rotation_type = rotation_stack[rotation_stack.length-1];
+		rotation_so_far = rotation_so_far + rAnimate;
+		if (rotation_so_far > 85){
+			rotation_stack.pop()
+			rAnimate = 90-rotation_so_far+rAnimate;
+			rotation_so_far = 0;
+			lastTime = 0;
+		}
+		for (var i = 0; i < 27; i++){
+			switch (rotation_type){
+				case "L":
+					if (cubes[i][0][
+					3]<-.5){
+						cubes[i] = mult(rotateX(rAnimate),cubes[i]);
+					}
+					break;
+				case "Li":
+					if (cubes[i][0][3]<-.5){
+						cubes[i] = mult(rotateX(-rAnimate),cubes[i]);
+					}
+					break;
+				case "F":
+					if (cubes[i][2][3]>0.5){
+						cubes[i] = mult(rotateZ(rAnimate),cubes[i]);
+					}
+					break;
+				case "Fi":
+					if (cubes[i][2][3]>0.5){
+						cubes[i] = mult(rotateZ(-rAnimate),cubes[i]);
+					}
+					break;
+				case "B":
+					if (cubes[i][2][3]<-0.5){
+						cubes[i] = mult(rotateZ(rAnimate),cubes[i]);
+					}
+					break;
+				case "Bi":
+					if (cubes[i][2][3]<-0.5){
+						cubes[i] = mult(rotateZ(-rAnimate),cubes[i]);
+					}
+					break;
+				case "R":
+					if (cubes[i][0][3]>0.5){
+						cubes[i] = mult(rotateX(rAnimate),cubes[i]);
+					}
+					break;
+				case "Ri":
+					if (cubes[i][0][3]>0.5){
+						cubes[i] = mult(rotateX(-rAnimate),cubes[i]);
+					}
+					break;
+				case "D":
+					if (cubes[i][1][3]<-0.5){
+						cubes[i] = mult(rotateY(rAnimate),cubes[i]);
+					}
+					break;
+				case "Di":
+					if (cubes[i][1][3]<-0.5){
+						cubes[i] = mult(rotateY(-rAnimate),cubes[i]);
+					}
+					break;
+				case "U":
+					if (cubes[i][1][3]>0.5){
+						cubes[i] = mult(rotateY(rAnimate),cubes[i]);
+					}
+					break;
+				case "Ui":
+					if (cubes[i][1][3]>0.5){
+						cubes[i] = mult(rotateY(-rAnimate),cubes[i]);
+					}
+					break;
+				case "V":
+					if ((cubes[i][0][3]>-0.5)&&(cubes[i][0][3]<0.5)){
+						cubes[i] = mult(rotateX(rAnimate),cubes[i]);
+					}
+					break;
+				case "Vi":
+					if ((cubes[i][0][3]>-0.5)&&(cubes[i][0][3]<0.5)){
+						cubes[i] = mult(rotateX(-rAnimate),cubes[i]);
+					}
+					break;
+				case "H":
+					if ((cubes[i][1][3]>-0.5)&&(cubes[i][1][3]<0.5)){
+						cubes[i] = mult(rotateY(rAnimate),cubes[i]);
+					}
+					break;
+				case "Hi":
+					if ((cubes[i][1][3]>-0.5)&&(cubes[i][1][3]<0.5)){
+						cubes[i] = mult(rotateY(-rAnimate),cubes[i]);
+					}
+					break;
+				case "S":
+					if ((cubes[i][2][3]>-0.5)&&(cubes[i][2][3]<0.5)){
+						cubes[i] = mult(rotateZ(rAnimate),cubes[i]);
+					}
+					break;
+				case "Si":
+					if ((cubes[i][2][3]>-0.5)&&(cubes[i][2][3]<0.5)){
+						cubes[i] = mult(rotateZ(-rAnimate),cubes[i]);
+					}
+					break;
+				default:
+					break;
+			}
+		}
+    }
+
+    function webGLStart() {
+        var canvas = document.getElementById("lesson04-canvas");
+        initGL(canvas);
+        initShaders()
+		initBuffers() //setup instance transformation matrices of every cube and buffers
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.enable(gl.DEPTH_TEST);
+		document.onmousedown = handleMouseDown;
+        document.onmouseup = handleMouseUp;
+        document.onmousemove = handleMouseMove;
+		document.getElementById( "LButton" ).onclick = function () { user_rotate("L")};
+		document.getElementById( "LiButton" ).onclick = function () { user_rotate("Li")};
+		document.getElementById( "RButton" ).onclick = function () { user_rotate("R")};
+		document.getElementById( "RiButton" ).onclick = function () { user_rotate("Ri")};
+		document.getElementById( "UButton" ).onclick = function () { user_rotate("U")};
+		document.getElementById( "UiButton" ).onclick = function () { user_rotate("Ui")};
+		document.getElementById( "DButton" ).onclick = function () { user_rotate("D")};
+		document.getElementById( "DiButton" ).onclick = function () { user_rotate("Di")};
+		document.getElementById( "FButton" ).onclick = function () { user_rotate("F")};
+		document.getElementById( "FiButton" ).onclick = function () { user_rotate("Fi")};
+		document.getElementById( "BButton" ).onclick = function () { user_rotate("B")};
+		document.getElementById( "BiButton" ).onclick = function () { user_rotate("Bi")};
+		document.getElementById( "VButton" ).onclick = function () { user_rotate("V")};
+		document.getElementById( "ViButton" ).onclick = function () { user_rotate("Vi")};
+		document.getElementById( "HButton" ).onclick = function () { user_rotate("H")};
+		document.getElementById( "HiButton" ).onclick = function () { user_rotate("Hi")};
+		document.getElementById( "SButton" ).onclick = function () { user_rotate("S")};
+		document.getElementById( "SiButton" ).onclick = function () { user_rotate("Si")};
+		document.getElementById( "LoadButton" ).onclick = function () { loadButton(); };
+		document.getElementById( "SaveButton" ).onclick = function () { saveButton(); };
+		document.getElementById("files").addEventListener('change', handleFileSelect, false);
+		tick();
+    }
+	
+	function loadButton(){
+		if (!file_loaded) {
+			alert("No file selected.");
+		} else {
+			for (var i = 0; i < 27; i++){
+				for (var j = 0; j < 4; j++){
+					for (var k = 0; k < 4; k++){
+						if (cubes[i][j][k] != fileContent[i][j][k]){
+							console.log("!");
+						}
+						cubes[i][j][k] = fileContent[i][j][k];
+					}	
+				}
+			}
+		}
+	}
+	
+	function saveButton(){
+		var link = document.getElementById("downloadlink");
+		link.href = makeTextFile(JSON.stringify(cubes));
+		link.innerHTML = "Download save state";
+	};
+	
+	var textFile = null
+	function makeTextFile(text){
+		var data = new Blob([text], {type: 'text/plain'});
+		if (textFile !== null) {
+		  window.URL.revokeObjectURL(textFile);
+		}
+		textFile = window.URL.createObjectURL(data);
+		return textFile;
+	};
+
+	function generateRandomTurns(){
+		if (rotation_stack.length > 0){
+			return;
+		}
+		numturns = document.getElementById("numturns").value;
+		var choices = ["L","D","R","U","F","B","V","H","S"];
+		var prev;
+		for (var i = 0; i < numturns; i++){
+			var string = choices[Math.floor((Math.random() * 9))]
+			while (prev == string){
+				string = choices[Math.floor((Math.random() * 9))]
+			}
+			prev = string;
+			if (Math.floor((Math.random() * 2)) == 0){
+				string += "i";
+			}
+			rotation_stack.push(string);
+		}
+	}
+	
+	var file_loaded = false;
+	var file_Content;
+	function handleFileSelect(evt) {
+		var files = evt.target.files;
+		f = files[0];
+		var reader = new FileReader();
+		reader.onload = (function(theFile) {
+			file_loaded = true;
+			return function(e) {
+			  fileContent = JSON.parse(reader.result);
+			}
+		  })(f);
+		reader.readAsText(f);
+	}
+	
+</script>
+
+<body onload="webGLStart();">
+    <canvas id="lesson04-canvas" style="border: none;" width="600" height="600"></canvas><br>
+	<p style="float: right; width: 800px; position: fixed;top:0px; left: 650px"><big><strong><font size = '9px' face="calibri">Welcome to Abiyaz's Rubik's Cube simulator! Spring 2017, ECE462</font></big></strong></p>
+	<div style="width: 800px;position: fixed;top:150px; left: 650px">
+
+	<button id="LButton" type= "button" style="width:65px; height:65px;font-size: 25px;margin-bottom:5px;">L</button>
+	<button id="RButton" type= "button" style="width:65px; height:65px;font-size: 25px;">R</button>
+	<button id="UButton" type= "button" style="width:65px; height:65px;font-size: 25px;">U</button>
+	<button id="DButton" type= "button" style="width:65px; height:65px;font-size: 25px;">D</button>
+	<button id="FButton" type= "button" style="width:65px; height:65px;font-size: 25px;">F</button>
+	<button id="BButton" type= "button" style="width:65px; height:65px;font-size: 25px;">B</button>
+	<button id="VButton" type= "button" style="width:65px; height:65px;font-size: 25px;">V</button>
+	<button id="HButton" type= "button" style="width:65px; height:65px;font-size: 25px;">H</button>
+	<button id="SButton" type= "button" style="width:65px; height:65px;font-size: 25px;">S</button>
+
+	<br>  
+	<button id="LiButton" type= "button" style="width:65px; height:65px;font-size: 25px;">L'</button>
+	<button id="RiButton" type= "button" style="width:65px; height:65px;font-size: 25px;">R'</button>
+	<button id="UiButton" type= "button" style="width:65px; height:65px;font-size: 25px;">U'</button>
+	<button id="DiButton" type= "button" style="width:65px; height:65px;font-size: 25px;">D'</button>
+	<button id="FiButton" type= "button" style="width:65px; height:65px;font-size: 25px;">F'</button>
+	<button id="BiButton" type= "button" style="width:65px; height:65px;font-size: 25px;">B'</button>
+	<button id="ViButton" type= "button" style="width:65px; height:65px;font-size: 25px;">V'</button>
+	<button id="HiButton" type= "button" style="width:65px; height:65px;font-size: 25px;">H'</button>
+	<button id="SiButton" type= "button" style="width:65px; height:65px;font-size: 25px;">S'</button>
+	</div>
+	<div style="width: 800px;position: fixed;top:300px; left: 650px">
+	<font size = '9px' face="calibri">Enter number of random turns:</font><br>
+	<input id="numturns" type="text" value=""><br>
+	<input type="submit" value="Randomize turns" onclick="generateRandomTurns()"><br>
+	</div>
+	<div style="width: 800px;position: fixed;top:450px; left: 650px">
+	<input type="file" id="files">
+	<button id="LoadButton">Load State</button>
+	<button id="SaveButton">Save State</button>
+	<a download="save.txt" id="downloadlink"></a>
+	</div>
+	<p id="cube_state"><big><strong><font size = '9px' face="calibri">Cube State: --</font></big></strong></p>
+</body>
+
