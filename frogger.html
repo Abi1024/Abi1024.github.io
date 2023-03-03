@@ -1,0 +1,605 @@
+<html>
+<title>Frogger (made in 2012)</title>
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <script src="p5/p5.min.js"></script>
+    <script type="text/javascript">
+	
+
+function setup() {
+    initializeFields();
+    createCanvas(1000, 700);
+    frameRate(30);
+    textFont("Verdana", 12);
+}
+
+// vehicle position
+var x1;
+
+var x2;
+
+var x3;
+
+var x4;
+
+var x5;
+
+var x12;
+
+var x13;
+
+var x14;
+
+// snog position
+var x6;
+
+var x7;
+
+var x8;
+
+var x9;
+
+var x10;
+
+var x11;
+
+// frog position
+var fy;
+
+var fx;
+
+// life
+var l2;
+
+var l;
+
+// frog orientation
+var sx;
+
+// snog speed
+var vsnog;
+
+// score
+var w;
+
+var tscore;
+
+// vehicle speed
+var vv1;
+
+var vv2;
+
+var vv3;
+
+// timer
+var timer;
+
+var state;
+
+var c;
+
+var c2;
+
+var c3;
+
+function draw() {
+    timer = timer - 5;
+    var stopgo = int(random(100));
+    if (stopgo == 0) {
+        if (vv3 > 0) {
+            if ((x2 < 925) && (x2 > 75) && (x14 < 925) && (x14 > 75)) {
+                vv3 = 0;
+            }
+        } else if (vv3 == 0) {
+            vv3 = 7 + w;
+        }
+    }
+    if (timer < 1) {
+        if (state == 0) {
+            timer = 1000;
+            state = 1;
+        } else if (state == 1) {
+            timer = 1000;
+            state = 0;
+        }
+    }
+    if (state == 0) {
+        c = color(255);
+        c2 = color(0, 255, 0);
+        c3 = color(0);
+        stroke(0);
+        background(0, 255, 0);
+        fill(0, 200, 255);
+        rect(0, 0, 1000, 100);
+        fill(255, 200, 0);
+        rect(0, 100, 1000, 100);
+        fill(0, 0, 255);
+        rect(0, 200, 1000, 100);
+        fill(200);
+        rect(0, 350, 1000, 250);
+        fill(255);
+        for (var i = 0; i < 6; i++) {
+            cloud(125 + i * 170, 30);
+        }
+    }
+    if (state == 1) {
+        c = color(0xFF, 0xF8, 0x29);
+        c2 = color(0, 125, 0);
+        c3 = color(255);
+        stroke(0);
+        background(0, 100, 0);
+        fill(10, 25, 50);
+        rect(0, 0, 1000, 100);
+        fill(155, 100, 0);
+        rect(0, 100, 1000, 100);
+        fill(0, 0, 100);
+        rect(0, 200, 1000, 100);
+        fill(100);
+        rect(0, 350, 1000, 250);
+    }
+    fill(c3);
+    if (l > 0) {
+        text("LIVES LEFT", 300, 675);
+    }
+    if (l < 1) {
+        text("GAME OVER. YOUR SCORE IS " + w + ". CLICK TO RETRY.", 300, 675);
+        fx = 75;
+        fy = 675;
+        sx = 1;
+        if (mouseIsPressed) {
+            l = l2;
+            w = 0;
+            vv1 = 5;
+            vv2 = 7;
+            vv3 = 7;
+        }
+    }
+    text("WINS   " + w, 900, 665);
+    text("HIGH SCORE   " + tscore, 857, 685);
+    truck(x1, 375, 1, color(0xFA, 0xAA, 0x28), c, 0);
+    bus(x2, 425, -1, color(0xC6, 0x08, 0x67), c);
+    car(x3, 470, 1, color(0x2C, 0xAD, 0x35), c);
+    bus(x4, 525, 1, color(0x13, 0x89, 0xD6), c);
+    car(x5, 570, -1, color(0xFA, 0x31, 0x12), c);
+    car(x12, 570, -1, color(0x5E, 0x29, 0xFF), c);
+    truck(x13, 375, 1, color(0x6E, 0xDB, 0xF7), c, 1);
+    bus(x14, 425, -1, color(0x17, 0xE0, 0x3D), c);
+    snog(x6, 275, color(0xC4, 0x69, 0x0E));
+    snog(x7, 275, color(0xC4, 0x69, 0x0E));
+    snog(x8, 275, color(0xC4, 0x69, 0x0E));
+    snog(x9, 225, color(0xC4, 0x69, 0x0E));
+    snog(x10, 225, color(0xC4, 0x69, 0x0E));
+    snog(x11, 225, color(0xC4, 0x69, 0x0E));
+    goal(475, 125);
+    frog(fx, fy, sx);
+    fill(0);
+    for (var i = 0; i < l; i++) {
+        heart(400 + i * 40, 670);
+    }
+    for (var i = 0; i < 6; i++) {
+        tree(50 + 170 * i, 50);
+    }
+    x1 = x1 - vv1;
+    x2 = x2 + vv3;
+    x3 = x3 - vv2;
+    x4 = x4 - vv2;
+    x5 = x5 + vv1;
+    x6 = x6 - vsnog;
+    x7 = x7 - vsnog;
+    x8 = x8 - vsnog;
+    x9 = x9 + vsnog;
+    x10 = x10 + vsnog;
+    x11 = x11 + vsnog;
+    x12 = x12 + vv1;
+    x13 = x13 - vv1;
+    x14 = x14 + vv3;
+    if (x1 < -75) {
+        x1 = 1105;
+    }
+    if (x2 > 1075) {
+        x2 = -75;
+    }
+    if (x3 < -50) {
+        x3 = 1050;
+    }
+    if (x4 < -75) {
+        x4 = 1075;
+    }
+    if (x5 > 1050) {
+        x5 = -50;
+    }
+    if (x6 < -62.5) {
+        x6 = 1062.5;
+    }
+    if (x7 < -62.5) {
+        x7 = 1062.5;
+    }
+    if (x8 < -62.5) {
+        x8 = 1062.5;
+    }
+    if (x9 > 1062.5) {
+        x9 = -62.5;
+    }
+    if (x10 > 1062.5) {
+        x10 = -62.5;
+    }
+    if (x11 > 1062.5) {
+        x11 = -62.5;
+    }
+    if (x12 > 1050) {
+        x12 = -50;
+    }
+    if (x13 < -75) {
+        x13 = 1105;
+    }
+    if (x14 > 1075) {
+        x14 = -75;
+    }
+}
+
+function keyPressed() {
+    if (sx < 3) {
+        if (((keyCode == UP_ARROW) || (key == 'w')) && (fy > 125)) {
+            fy = fy - 50;
+            sx = 1;
+        }
+        if (((keyCode == DOWN_ARROW) || (key == 's')) && (fy < 650)) {
+            fy = fy + 50;
+            sx = -1;
+        }
+        if (((keyCode == LEFT_ARROW) || (key == 'a')) && (fx > 50)) {
+            fx = fx - 50;
+            sx = -2;
+        }
+        if (((keyCode == RIGHT_ARROW) || (key == 'd')) && (fx < 950)) {
+            fx = fx + 50;
+            sx = 2;
+        }
+    }
+}
+
+function tree(x, y) {
+    noStroke();
+    fill(200, 100, 0);
+    rect(x, y, 5, 100);
+    fill(c2);
+    ellipse(x - 10, y - 5, 40, 40);
+    ellipse(x + 10, y - 5, 40, 40);
+    ellipse(x, y - 30, 40, 40);
+}
+
+function truck(x, y, d, c1, c2, q) {
+    stroke(0);
+    fill(0);
+    ellipse(x - 80, y + 15, 20, 20);
+    ellipse(x - 30, y + 15, 20, 20);
+    ellipse(x + 30, y + 15, 20, 20);
+    fill(c1);
+    rect(x - 50, y - 25, 100, 40);
+    rect(x - 55, y - 2, 5, 4);
+    rect(x - 105, y - 5, 50, 20);
+    fill(c2);
+    rect(x - 90, y - 25, 35, 20);
+    triangle(x - 90, y - 25, x - 90, y - 5, x - 105, y - 5);
+    stroke(c2);
+    line(x - 90, y - 24, x - 90, y - 6);
+    stroke(0);
+    line(x - 105, y - 5, x - 85, y - 10);
+    line(x - 87, y - 12, x - 83, y - 8);
+    stroke(0, 0, 255);
+    fill(0);
+    if (q == 0) {
+        text("BEER", x - 25, y);
+    }
+    if (q == 1) {
+        text("FOOD", x - 25, y);
+    }
+    stroke(0);
+    if (fx < x + 75) {
+        if (fx > x - 130) {
+            if (fy < y + 25) {
+                if (fy > y - 25) {
+                    if (sx < 3) {
+                        sx = 3;
+                    }
+                }
+            }
+        }
+    }
+}
+
+function car(x, y, d, c1, c2) {
+    stroke(0);
+    fill(0);
+    ellipse(x - 30 * d, y + 20, 20, 20);
+    ellipse(x + 30 * d, y + 20, 20, 20);
+    fill(c1);
+    rect(x - 50 * d, y, 100 * d, 20);
+    fill(c2);
+    rect(x - 15 * d, y - 20, 30 * d, 20);
+    triangle(x - 15 * d, y - 20, x - 15 * d, y, x - 30 * d, y);
+    triangle(x + 15 * d, y - 20, x + 15 * d, y, x + 30 * d, y);
+    stroke(c2);
+    line(x - 15 * d, y - 19, x - 15 * d, y - 1);
+    line(x + 15 * d, y - 19, x + 15 * d, y - 1);
+    stroke(0);
+    line(x - 30 * d, y, x - 15 * d, y - 7);
+    line(x - 17 * d, y - 9, x - 13 * d, y - 5);
+    if (fx < x + 50) {
+        if (fx > x - 50) {
+            if (fy < y + 25) {
+                if (fy > y - 25) {
+                    if (sx < 3) {
+                        sx = 3;
+                    }
+                }
+            }
+        }
+    }
+}
+
+function bus(x, y, d, c1, c2) {
+    stroke(0);
+    fill(0);
+    ellipse(x - 50 * d, y + 15, 20, 20);
+    ellipse(x + 50 * d, y + 15, 20, 20);
+    fill(c1);
+    beginShape();
+    vertex(x - 65 * d, y - 25);
+    vertex(x + 75 * d, y - 25);
+    vertex(x + 75 * d, y + 15);
+    vertex(x - 75 * d, y + 15);
+    vertex(x - 75 * d, y - 5);
+    vertex(x - 65 * d, y - 25);
+    endShape();
+    fill(c2);
+    beginShape();
+    vertex(x - 65 * d, y - 25);
+    vertex(x - 45 * d, y - 25);
+    vertex(x - 45 * d, y - 5);
+    vertex(x - 75 * d, y - 5);
+    vertex(x - 65 * d, y - 25);
+    endShape();
+    for (var i = 0; i < 7; i++) {
+        rect(x + 15 * i * d - 30 * d, y - 25, 15 * d, 20);
+    }
+    if (fx < x + 75) {
+        if (fx > x - 75) {
+            if (fy < y + 25) {
+                if (fy > y - 25) {
+                    if (sx < 3) {
+                        sx = 3;
+                    }
+                }
+            }
+        }
+    }
+    stroke(0);
+    line(x - 75 * d, y - 5, x - 60 * d, y - 12);
+    line(x - 62 * d, y - 14, x - 58 * d, y - 10);
+}
+
+function snog(x, y, c1) {
+    stroke(0);
+    fill(c1);
+    rect(x - 62.5, y - 20, 125, 40);
+    for (var i = 0; i < 5; i++) {
+        line(x - 62.5, y + 7.5 * i - 15, x + 62.5, y + 7.5 * i - 15);
+    }
+    // if frog collides with snog
+    if (sx < 3) {
+        if (fx < x + 75) {
+            if (fx > x - 75) {
+                if (fy < y + 25) {
+                    if (fy > y - 25) {
+                        if (fy == 225) {
+                            fx = fx + vsnog;
+                        }
+                        if (fy == 275) {
+                            fx = fx - vsnog;
+                        }
+                    }
+                }
+            }
+        }
+        // if frog is on 1st row of water but not on 1st row of snog
+        if ((fy == 275) && (abs(fx - x6) > 75) && (abs(fx - x7) > 75) && ((abs(fx - x8) > 75))) {
+            sx = 3;
+        }
+        // if frog is on 2nd row of water but not on 2nd row of snog
+        if ((fy == 225) && (abs(fx - x9) > 75) && (abs(fx - x10) > 75) && ((abs(fx - x11) > 75))) {
+            sx = 3;
+        }
+    }
+}
+
+function frog(x, y, d) {
+    noStroke();
+    if (d == 1) {
+        fill(color(0xF5, 0xEE, 0x23));
+        rect(x - 20, y - 10 * d, 40, 5 * d);
+        rect(x - 20, y - 20 * d, 5, 10 * d);
+        rect(x + 15, y - 20 * d, 5, 10 * d);
+        rect(x - 20, y + 10 * d, 40, 5 * d);
+        rect(x - 20, y + 10 * d, 5, 10 * d);
+        rect(x + 15, y + 10 * d, 5, 10 * d);
+        fill(0, 50, 0);
+        ellipse(x, y, 30, 40 * d);
+        fill(255, 0, 0);
+        ellipse(x - 5, y - 10 * d, 5, 5 * d);
+        ellipse(x + 5, y - 10 * d, 5, 5 * d);
+    }
+    if (d == -1) {
+        fill(color(0xF5, 0xEE, 0x23));
+        rect(x - 20, y - 10 * d, 40, 5 * d);
+        rect(x - 20, y - 20 * d, 5, 10 * d);
+        rect(x + 15, y - 20 * d, 5, 10 * d);
+        rect(x - 20, y + 10 * d, 40, 5 * d);
+        rect(x - 20, y + 10 * d, 5, 10 * d);
+        rect(x + 15, y + 10 * d, 5, 10 * d);
+        fill(0, 50, 0);
+        ellipse(x, y, 30, 40 * d);
+        fill(255, 0, 0);
+        ellipse(x - 5, y - 10 * d, 5, 5 * d);
+        ellipse(x + 5, y - 10 * d, 5, 5 * d);
+    }
+    if (d == 2) {
+        noStroke();
+        fill(color(0xF5, 0xEE, 0x23));
+        rect(x + 10 * (d / 2), y - 20, 5 * (d / 2), 40);
+        rect(x + 10 * (d / 2), y - 20, 15 * (d / 2), 5);
+        rect(x + 10 * (d / 2), y + 15, 15 * (d / 2), 5);
+        rect(x - 10 * (d / 2), y - 20, 5 * (d / 2), 40);
+        rect(x - 15 * (d / 2), y - 20, 10 * (d / 2), 5);
+        rect(x - 15 * (d / 2), y + 15, 10 * (d / 2), 5);
+        fill(0, 50, 0);
+        ellipse(x, y, 40 * (d / 2), 30);
+        fill(255, 0, 0);
+        ellipse(x + 10 * (d / 2), y - 5, 5 * (d / 2), 5);
+        ellipse(x + 10 * (d / 2), y + 5, 5 * (d / 2), 5);
+    }
+    if (d == -2) {
+        noStroke();
+        fill(color(0xF5, 0xEE, 0x23));
+        rect(x + 10 * (d / 2), y - 20, 5 * (d / 2), 40);
+        rect(x + 10 * (d / 2), y - 20, 15 * (d / 2), 5);
+        rect(x + 10 * (d / 2), y + 15, 15 * (d / 2), 5);
+        rect(x - 10 * (d / 2), y - 20, 5 * (d / 2), 40);
+        rect(x - 15 * (d / 2), y - 20, 10 * (d / 2), 5);
+        rect(x - 15 * (d / 2), y + 15, 10 * (d / 2), 5);
+        fill(0, 50, 0);
+        ellipse(x, y, 40 * (d / 2), 30);
+        fill(255, 0, 0);
+        ellipse(x + 10 * (d / 2), y - 5, 5 * (d / 2), 5);
+        ellipse(x + 10 * (d / 2), y + 5, 5 * (d / 2), 5);
+    }
+    if (sx > 2) {
+        sx = sx + 1;
+        skull(fx, fy);
+        if (sx > 25) {
+            ouch();
+            sx = 1;
+        }
+    }
+}
+
+function cloud(x, y) {
+    noStroke();
+    fill(255);
+    ellipse(x, y, 20, 20);
+    ellipse(x - 10, y - 8, 20, 20);
+    ellipse(x + 3, y - 6, 20, 20);
+    ellipse(x + 7, y + 1, 20, 20);
+    ellipse(x - 14, y - 10, 20, 20);
+    ellipse(x + 7, y + 4, 20, 20);
+    ellipse(x - 11, y + 6, 30, 30);
+    ellipse(x - 20, y, 25, 25);
+    ellipse(x + 20, y - 10, 25, 25);
+    ellipse(x + 20, y, 25, 25);
+}
+
+function heart(x, y) {
+    noStroke();
+    fill(255, 0, 0);
+    ellipse(x - 5, y, 10, 10);
+    ellipse(x + 5, y, 10, 10);
+    triangle(x - 10, y, x + 10, y, x, y + 15);
+}
+
+function goal(x, y) {
+    noStroke();
+    fill(0, 255, 0);
+    ellipse(x, y, 50, 50);
+    stroke(0);
+    fill(0);
+    text("GOAL", 460, 130);
+    if (fx < x + 50) {
+        if (fx > x - 50) {
+            if (fy < y + 25) {
+                if (fy > y - 25) {
+                    fx = 75;
+                    fy = 675;
+                    w = w + 1;
+                    if (w > tscore) {
+                        tscore = w;
+                    }
+                    vv1 = vv1 + 1;
+                    vv2 = vv2 + 1;
+                    if ((w % 5) == 0) {
+                        l = l + 1;
+                    }
+                    if (vv3 > 0) {
+                        vv3 = vv3 + 1;
+                    }
+                }
+            }
+        }
+    }
+}
+
+function ouch() {
+    noStroke();
+    fx = 75;
+    fy = 675;
+    l = l - 1;
+}
+
+function skull(x, y) {
+    noStroke();
+    fill(255);
+    ellipse(x, y - 10, 20, 20);
+    rect(x - 7, y - 2, 14, 8);
+    stroke(255);
+    strokeWeight(2);
+    line(x - 15, y + 5, x + 15, y + 20);
+    line(x + 15, y + 5, x - 15, y + 20);
+    noStroke();
+    strokeWeight(1);
+    fill(0);
+    triangle(x - 7, y - 12, x - 3, y - 12, x - 5, y - 17);
+    triangle(x + 7, y - 12, x + 3, y - 12, x + 5, y - 17);
+}
+
+function initializeFields() {
+    x1 = 500;
+    x2 = 600;
+    x3 = 100;
+    x4 = 300;
+    x5 = 700;
+    x12 = 100;
+    x13 = 200;
+    x14 = 100;
+    x6 = 300;
+    x7 = 600;
+    x8 = 900;
+    x9 = 200;
+    x10 = 500;
+    x11 = 800;
+    fy = 675;
+    fx = 75;
+    l2 = 3;
+    l = 3;
+    sx = 1;
+    vsnog = 5;
+    w = 0;
+    tscore = 0;
+    vv1 = 5;
+    vv2 = 7;
+    vv3 = 7;
+    timer = 1000;
+    state = 1;
+    c = color(255);
+    c2 = color(0, 255, 0);
+    c3 = color(0);
+}
+
+
+</script>
+
+  </head>
+  <body>
+    <main>
+    </main>
+  </body>
+</html>

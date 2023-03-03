@@ -38,8 +38,7 @@ var AI_move;
 function setup() {
     initializeFields();
     createCanvas(1200, 1200);
-    myFont = createFont("Verdana", 12);
-    textFont(myFont, 12);
+    textFont('Verdana', 12);
     reset_board(board);
 }
 
@@ -72,7 +71,7 @@ function draw() {
                 move.add(destination);
                 var new_position = process_move(board, move);
                 user_move[0] = user_move[1] = -1;
-                if ((is_capture_move == 0) || can_capture(board, new_position).createCanvas() <= 0) {
+                if ((is_capture_move == 0) || can_capture(board, new_position).length <= 0) {
                     // the turn is over only if the piece moved or if it captured, but cannot capture anymore.
                     turn *= -1;
                     must_capture = -1;
@@ -101,21 +100,21 @@ function legal_moves(board, player_color) {
     stack.push([]);
     var tempboard = new Array(64);
     var current_position = 0;
-    while (stack.createCanvas() > 0) {
-        System.arraycopy(board, 0, tempboard, 0, 64);
-        var move = stack.remove(stack.createCanvas() - 1);
+    while (stack.length > 0) {
+		var tempboard = structuredClone(board)
+        var move = stack.pop();
         // print_move(move);
-        if (move.createCanvas() > 0) {
+        if (move.length > 0) {
             // println("Interal or leaf node, processing a possibly multi-capture move");
             current_position = process_move(tempboard, move);
         // println("Processed the above move");
         }
-        if ((move.createCanvas() != 0) && (can_capture(tempboard, current_position).createCanvas() == 0)) {
+        if ((move.length != 0) && (can_capture(tempboard, current_position).length() == 0)) {
             // if we are at a leaf node
             // println("Leaf node");
             legal.push(move);
         } else {
-            if (move.createCanvas() == 0) {
+            if (move.length == 0) {
                 // println("Legal moves: Root node of capture tree");
                 for (var i = 0; i < 64; i++) {
                     // for each friendly piece, we determine what captures it can make
@@ -128,15 +127,15 @@ function legal_moves(board, player_color) {
                         // if the piece is friendly
                         // what captures can it make?
                         var captures = can_capture(tempboard, i);
-                        if (captures.createCanvas() > 0) {
+                        if (captures.length > 0) {
                             // if it can make a capture
-                            for (var j = 0; j < captures.createCanvas(); j++) {
+                            for (var j = 0; j < captures.length; j++) {
                                 var captures2 = [];
-                                captures2.add(i);
-                                captures2.add(captures.get(j));
+                                captures2.push(i);
+                                captures2.push(captures[j]);
                                 // println("Currently at root node. Adding move to stack: ");
                                 print_move(captures2);
-                                stack.add(captures2);
+                                stack.push(captures2);
                             }
                         }
                     }
@@ -144,20 +143,20 @@ function legal_moves(board, player_color) {
             } else {
                 // if we are at an internal node
                 var captures = can_capture(tempboard, current_position);
-                if (captures.createCanvas() > 0) {
-                    for (var j = 0; j < captures.createCanvas(); j++) {
+                if (captures.length > 0) {
+                    for (var j = 0; j < captures.length; j++) {
                         var captures2 = move;
-                        captures2.add(captures.get(j));
+                        captures2.push(captures[j]);
                         // println("Currently at internal node. Adding move to stack: ");
                         print_move(captures2);
-                        stack.add(move);
+                        stack.push(move);
                     }
                 }
             }
         }
     }
     // if, at this point, no captures are possible, then we see if movement/promotion is possible. If not, no move is possible.
-    if (legal.createCanvas() > 0) {
+    if (legal.size > 0) {
         print_legal_moves(legal);
         // println("End of legal moves function. Captures are possible, so movement is not considered.");
         return legal;
@@ -173,17 +172,17 @@ function legal_moves(board, player_color) {
                 // if the piece is a king or if the piece is white, test for upward capture
                 if ((i + 9 < 64) && (i % 8 < 7) && (board[i + 9] == 0)) {
                     // move up-right
-                    var move = new ArrayList();
-                    move.add(i);
-                    move.add(i + 9);
-                    legal.add(move);
+                    var move = [];
+                    move.push(i);
+                    move.push(i + 9);
+                    legal.push(move);
                 }
                 if ((i + 7 < 64) && (i % 8 > 0) && (board[i + 7] == 0)) {
                     // move up-left
-                    var move = new ArrayList();
-                    move.add(i);
-                    move.add(i + 7);
-                    legal.add(move);
+                    var move = [];
+                    move.push(i);
+                    move.push(i + 7);
+                    legal.push(move);
                 }
             }
             if ((abs(board[i]) == 10) || (piece_color == -1)) {
@@ -191,16 +190,16 @@ function legal_moves(board, player_color) {
                 if ((i - 7 > -1) && (i % 8 < 7) && (board[i - 7] == 0)) {
                     // move down-right
                     var move = new ArrayList();
-                    move.add(i);
-                    move.add(i - 7);
-                    legal.add(move);
+                    move.push(i);
+                    move.push(i - 7);
+                    legal.push(move);
                 }
                 if ((i - 9 > -1) && (i % 8 > 0) && (board[i - 9] == 0)) {
                     // move down-left
-                    var move = new ArrayList();
-                    move.add(i);
-                    move.add(i - 9);
-                    legal.add(move);
+                    var move = [];
+                    move.push(i);
+                    move.push(i - 9);
+                    legal.push(move);
                 }
             }
         }
@@ -228,12 +227,12 @@ function winner(board) {
     }
     print("Winner function: checking if white has any legal moves");
     var legal = legal_moves(board, 1);
-    if ((legal.createCanvas() == 0) && (turn == 1)) {
+    if ((legal.length == 0) && (turn == 1)) {
         return -1;
     }
     print("Winner function: checking if black has any legal moves");
     legal = legal_moves(board, -1);
-    if ((legal.createCanvas() == 0) && (turn == -1)) {
+    if ((legal.length == 0) && (turn == -1)) {
         return 1;
     }
     return 0;
@@ -341,8 +340,8 @@ function display_text() {
     if (edit_mode == 0) {
         text("EDIT", 125, 225);
         text("AI", 125, 285);
-        if (AI_move.createCanvas() > 0) {
-            text(AI_move.get(0), 125, 345);
+        if (AI_move.length > 0) {
+            text(AI_move[0], 125, 345);
         }
     } else {
         text("BACK TO", 105, 225);
@@ -366,17 +365,17 @@ function display_text() {
             text("Legal moves (for black):", 625, 225);
         }
         if (must_capture == -1) {
-            for (var i = 0; i < current_legal_moves.createCanvas(); i++) {
-                text(current_legal_moves.get(i).get(0), 625, 240 + i * 15);
-                for (var j = 1; j < current_legal_moves.get(i).createCanvas(); j++) {
-                    text("to " + current_legal_moves.get(i).get(j), 625 + 35 * (j - 1) + 20, 240 + i * 15);
+            for (var i = 0; i < current_legal_moves.length; i++) {
+                text(current_legal_moves[i][0], 625, 240 + i * 15);
+                for (var j = 1; j < current_legal_moves[i].length; j++) {
+                    text("to " + current_legal_moves[i][j], 625 + 35 * (j - 1) + 20, 240 + i * 15);
                 }
             }
         } else {
             current_legal_moves2 = can_capture(board, must_capture);
-            for (var i = 0; i < current_legal_moves2.createCanvas(); i++) {
+            for (var i = 0; i < current_legal_moves2.length; i++) {
                 text(must_capture, 625, 240 + i * 15);
-                text("to " + current_legal_moves2.get(i), 645, 240 + i * 15);
+                text("to " + current_legal_moves2[i], 645, 240 + i * 15);
             }
         }
     }
@@ -386,14 +385,14 @@ function process_move(board, move) {
     // given a board, this function processes the move on the board, updating it to reflect the move being played. The entries of move correspond to {piece, destination}. A destination that is occupied implies a capture, and must be dealt with accordingly.
     print("Process_move function: ");
     print_move(move);
-    var piece = board[move.get(0)];
+    var piece = board[move[0]];
     var piece_color = abs(piece) / piece;
-    if (board[move.get(1)] != 0) {
+    if (board[move[1]] != 0) {
         // if the move is a capture
-        var next_move = move.get(0);
-        for (var i = 1; i < move.createCanvas(); i++) {
+        var next_move = move[0];
+        for (var i = 1; i < move.length; i++) {
             // potential optimization below
-            if (move.get(i) - next_move == 9) {
+            if (move[i] - next_move == 9) {
                 // capture up-right
                 print("capturing up-left");
                 if ((abs(piece) == 1) && (next_move + 18 > 55)) {
@@ -402,10 +401,10 @@ function process_move(board, move) {
                 } else {
                     board[next_move + 18] = board[next_move];
                 }
-                board[move.get(i)] = 0;
+                board[move[i]] = 0;
                 board[next_move] = 0;
                 next_move = next_move + 18;
-            } else if (move.get(i) - next_move == 7) {
+            } else if (move[i] - next_move == 7) {
                 // capture up-left
                 print("capturing up-left");
                 if ((abs(piece) == 1) && (next_move + 14 > 55)) {
@@ -414,10 +413,10 @@ function process_move(board, move) {
                 } else {
                     board[next_move + 14] = board[next_move];
                 }
-                board[move.get(i)] = 0;
+                board[move[i]] = 0;
                 board[next_move] = 0;
                 next_move = next_move + 14;
-            } else if (move.get(i) - next_move == -7) {
+            } else if (move[i] - next_move == -7) {
                 // capture down-right
                 print("capturing down-right");
                 if ((abs(piece) == 1) && (next_move - 14 < 8)) {
@@ -426,10 +425,10 @@ function process_move(board, move) {
                 } else {
                     board[next_move - 14] = board[next_move];
                 }
-                board[move.get(i)] = 0;
+                board[move[i]] = 0;
                 board[next_move] = 0;
                 next_move = next_move - 14;
-            } else if (move.get(i) - next_move == -9) {
+            } else if (move[i]- next_move == -9) {
                 // capture down-left
                 print("capturing down-left");
                 if ((abs(piece) == 1) && (next_move - 18 < 8)) {
@@ -438,22 +437,22 @@ function process_move(board, move) {
                 } else {
                     board[next_move - 18] = board[next_move];
                 }
-                board[move.get(i)] = 0;
+                board[move[i]] = 0;
                 board[next_move] = 0;
                 next_move = next_move - 18;
             }
         }
         return next_move;
-    } else if ((abs(piece) == 1) && ((move.get(1) / 8) == (7 * (piece_color + 1) / 2))) {
+    } else if ((abs(piece) == 1) && ((move[1] / 8) == (7 * (piece_color + 1) / 2))) {
         // if the move is a promotion
-        board[move.get(1)] = 10 * board[move.get(0)];
-        board[move.get(0)] = 0;
-        return move.get(1);
+        board[move[1]] = 10 * board[move[0]];
+        board[move[0]] = 0;
+        return move[1];
     } else {
         // if the move is just a regular move
-        board[move.get(1)] = board[move.get(0)];
-        board[move.get(0)] = 0;
-        return move.get(1);
+        board[move[1]] = board[move[0]];
+        board[move[0]] = 0;
+        return move[1];
     }
 }
 
@@ -461,7 +460,7 @@ function can_capture(board, position) {
     // given a board and a piece on the board (specified by its position on the board), can that piece make an immediate capture? This function returns the list of captures (each stored as a vector of ints).
     var piece = board[position];
     var piece_color = abs(piece) / piece;
-    var captures = new ArrayList();
+    var captures = [];
     if ((abs(piece) == 10) || (piece_color == 1)) {
         // if the piece is a king or if the piece is white, test for upward capture
         if ((position + 18 < 64) && (position % 8 < 6) && (board[position + 18] == 0) && (board[position + 9] != 0) && (abs(board[position + 9]) / board[position + 9] == -piece_color)) {
@@ -489,9 +488,9 @@ function can_capture(board, position) {
 
 function print_legal_moves(array) {
     print("Printing legal moves ");
-    for (var i = 0; i < array.createCanvas(); i++) {
-        for (var j = 0; j < array.get(i).createCanvas(); j++) {
-            print(array.get(i).get(j) + " ");
+    for (var i = 0; i < array.length; i++) {
+        for (var j = 0; j < array[i].length; j++) {
+            print(array[i][j] + " ");
         }
         print("\t");
     }
@@ -499,8 +498,8 @@ function print_legal_moves(array) {
 }
 
 function print_move(move) {
-    for (var i = 0; i < move.createCanvas(); i++) {
-        print(move.get(i) + " ");
+    for (var i = 0; i < move.length; i++) {
+        print(move[i] + " ");
     }
     print();
 }
@@ -513,8 +512,8 @@ function is_legal_move(board, position, destination, player_color) {
         return false;
     } else {
         var legal_moves_set = legal_moves(board, player_color);
-        for (var i = 0; i < legal_moves_set.createCanvas(); i++) {
-            if ((legal_moves_set.get(i).get(0) == position) && (legal_moves_set.get(i).get(1) == destination)) {
+        for (var i = 0; i < legal_moves_set.length; i++) {
+            if ((legal_moves_set[i][0] == position) && (legal_moves_set[i][1] == destination)) {
                 return true;
             }
         }
@@ -547,8 +546,9 @@ function reset_board(board) {
 }
 
 function mousePressed() {
-    var x = int((mouseX - 200)) / 50;
-    var y = int((600 - mouseY)) / 50;
+    var x = floor((mouseX - 200)) / 50;
+    var y = floor((600 - mouseY)) / 50;
+	print("Debug: ", x, " " , y)
     if ((edit_mode == 0) && ((x > -1) && (x < 8) && (y > -1) && (y < 8))) {
         // if the mouse is clicked within the board during game
         print("User clicked on: " + (y * 8 + x));
@@ -588,8 +588,8 @@ function mousePressed() {
         turn *= -1;
     } else if ((edit_mode == 0) && (mouseX > 100) && (mouseX < 175) && (mouseY > 260) && (mouseY < 310)) {
         // if the AI button is pressed
-        AI_move = new ArrayList();
-        AI_move.add(minimax(board, turn, 1));
+        AI_move = []
+        AI_move.push(minimax(board, turn, 1));
     } else if ((edit_mode == 1) && ((x > -1) && (x < 8) && (y > -1) && (y < 8))) {
         // if the mouse is clicked within the board during edit mode
         print("User clicked on: " + (y * 8 + x));
@@ -619,13 +619,12 @@ function minimax(board, player_color, depth) {
     if (depth == 0) {
         return heuristic(board);
     }
-    var best_move = new ArrayList();
+    var best_move = [];
     var best_score = 0;
     var options = legal_moves(board, player_color);
-    for (var i = 0; i < options.createCanvas(); i++) {
-        var tempboard = new Array(64);
-        System.arraycopy(board, 0, tempboard, 0, 64);
-        process_move(tempboard, options.get(i));
+    for (var i = 0; i < options.length; i++) {
+        var tempboard = structuredClone(board)
+        process_move(tempboard, options[i]);
         var value = minimax(tempboard, -player_color, depth - 1);
         switch(player_color) {
             case 1:
@@ -683,16 +682,16 @@ function heuristic(board) {
  
  */
 function initializeFields() {
-    board = new Array(64);
+    board = [];;
     turn = 1;
     edit_mode = 0;
     user_move = [ -1, -1 ];
-    current_legal_moves = new ArrayList();
-    current_legal_moves2 = new ArrayList();
+    current_legal_moves = [];
+    current_legal_moves2 = [];
     global_winner = 0;
     must_capture = -1;
     myFont = null;
-    AI_move = new ArrayList();
+    AI_move = [];
 }
 
 
