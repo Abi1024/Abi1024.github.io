@@ -1,2 +1,1 @@
-# Dr-Mario
-3D Dr. Mario for ECE462
+Personal site for Abiyaz Chowdhury. Published at https://abi1024.github.io
