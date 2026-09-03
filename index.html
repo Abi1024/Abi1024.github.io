@@ -81,6 +81,9 @@
     .pubs li {
       margin-bottom: 0.9rem;
     }
+    sub {
+      font-size: 0.75em;
+    }
   </style>
 </head>
 <body>
@@ -109,15 +112,15 @@
     <h3>Graduate Research Assistant</h3>
     <p class="meta">Stony Brook University | Advisor: <a href="https://www3.cs.stonybrook.edu/~bender/">Michael A. Bender</a> | 2019-present</p>
     <ul>
-      <li>Built GraphZeppelin, a C++ streaming graph engine (2-5M edge updates/sec) for connectivity on graphs larger than RAM. <a href="https://github.com/GraphStreamingProject/GraphZeppelin">Code</a></li>
-      <li>Implemented CubeSketch, an l0 sketch used in that engine: 4x less space and about 1000x faster updates than prior samplers for this workload.</li>
+      <li>Built GraphZeppelin, a C++ streaming graph engine (2&ndash;5M edge updates/sec) for connectivity on graphs larger than RAM. <a href="https://github.com/GraphStreamingProject/GraphZeppelin">Code</a></li>
+      <li>Implemented CubeSketch, an &ell;<sub>0</sub> sketch used in that engine: 4&times; less space and about 1000&times; faster updates than prior samplers for this workload.</li>
       <li>Added out-of-core I/O (node-based buffering, gutter trees) so the same system can run on SSD for much larger graphs, with about 29% throughput loss.</li>
-      <li>Parallelized ingestion with OpenMP (46 threads, 25x throughput) and built Linux cgroup memory-pressure tests for cache-oblivious sorting and matrix multiplication.</li>
+      <li>Parallelized ingestion with OpenMP (46 threads, 25&times; throughput) and built Linux cgroup memory-pressure tests for cache-oblivious sorting and matrix multiplication.</li>
     </ul>
   </div>
   <div class="job">
     <h3>Teaching Assistant</h3>
-    <p class="meta">Stony Brook University | 2017-2020</p>
+    <p class="meta">Stony Brook University | 2017-2023</p>
     <ul>
       <li>TA for 9 CS courses (30-105 students), including Algorithms, Software Engineering, Operating Systems, and graduate NLP.</li>
       <li>Built Linux sandboxing for autograding (cgroups, ulimit).</li>
